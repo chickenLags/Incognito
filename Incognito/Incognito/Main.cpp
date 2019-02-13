@@ -2,6 +2,14 @@
 #include <GL\glew.h>
 #include <GLFW\glfw3.h>
 #include <iostream>
+#include "Shader.h";
+#include <src/SOIL.h>
+#include "Include\glm\glm.hpp";
+#include "Include\glm\gtc\matrix_transform.hpp";
+#include "Include\glm\gtc\type_ptr.hpp";
+
+
+
 
 //void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode);
 void key_callback(GLFWwindow* window, int key, int scancode, int action, int mode) {
@@ -11,30 +19,26 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	}
 }
 
-// shaders
-static const char* vertex_shader =
-"#version 330 core\n"
-"layout (location = 0) in vec3 position;\n"
-"void main(){\n"
-"gl_Position = vec4(position.x, position.y, position.z, 1.0); }\n";
-
-static const char* fragment_shader =
-"#version 330 core\n"
-"out vec4 color; \n"
-"void main(){\n"
-"color = vec4(1.0f, 0.5f, 0.2f, 1.0f); } \n";
-
-static const char* second_fragment_shader =
-"#version 330 core\n"
-"out vec4 color; \n"
-"void main(){\n"
-"color = vec4(0.2f, 0.9f, 0.3f, 1.0f);} \n";
 
 // make vertices for triangle
 GLfloat vertices[] = {
 	-0.5f, -0.5f, 0.0f,
 	 0.5f, -0.5f, 0.0f,
 	 0.0f,  0.5f, 0.0f
+};
+
+GLfloat vertices_color[] = {
+	-0.5f, -0.5f, 0.0f,		1.0f, 0.0f, 0.0f,
+	 0.5f, -0.5f, 0.0f,		0.0f, 1.0f, 0.0f,
+	 0.0f,  0.5f, 0.0f,		0.0f, 0.0f, 1.0f
+};
+
+// SQUARE x, y, z,			r, g, b,			s, t
+GLfloat vertices_color_texture[] = {
+	 0.5f,  0.5f, 0.0f,		1.0f, 0.0f, 0.0f,	1.0f, 1.0f,
+	 0.5f, -0.5f, 0.0f,		0.0f, 1.0f, 0.0f,	1.0f, 0.0f,
+	-0.5f, -0.5f, 0.0f,		0.0f, 0.0f, 1.0f,	0.0f, 0.0f,
+	-0.5f,  0.5f, 0.0f,		1.0f, 1.0f, 0.0f,	0.0f, 1.0f
 };
 
 GLfloat square_vertices[] = {
@@ -62,54 +66,8 @@ GLuint indices[] = {
 	1, 2, 3		// second triangle
 };
 
-GLuint makeShader(GLenum type, const char* shader) {
 
-	// compile shaders 
-	GLuint vertexShader;
-	GLint succes;
-	GLchar infoLog[512];
 
-	vertexShader = glCreateShader(type);
-	glShaderSource(vertexShader, 1, (const GLchar**)&shader, NULL);
-	glCompileShader(vertexShader);
-
-	// check whether compilation was successful
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &succes);
-	if (!succes) {
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION::FAILED\n" <<
-			infoLog << std::endl;
-	}
-
-	return vertexShader;
-}
-
-GLuint makeProgram(GLuint vertexShader, GLuint fragmentShader){
-	// create shader program
-	GLuint shaderProgram;
-	shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-	
-	GLint succes;
-	GLchar infoLog[512];
-
-	//check for errors:
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &succes);
-	if (!succes) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION::FAILED\n" <<
-			infoLog << std::endl;
-	}
-
-	// remove compiled shaders;
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
-
-	return shaderProgram;
-
-}
 
 GLFWwindow* init() {
 
@@ -144,26 +102,7 @@ GLFWwindow* init() {
 	return window;
 }
 
-GLuint makeMesh(GLfloat vertices[] ) {
 
-	GLuint VAO;
-	GLuint VBO;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-
-	glBindVertexArray(VAO);
-
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-	glEnableVertexAttribArray(0);
-
-	glBindVertexArray(0);
-
-	return VAO;
-
-}
 
 
 int main() {
@@ -171,29 +110,108 @@ int main() {
 	GLFWwindow * window = init();
 
 	// compile and create program (and delete shaders afterwards)
-	GLuint shaderProgram = makeProgram(makeShader(GL_VERTEX_SHADER, vertex_shader), makeShader(GL_FRAGMENT_SHADER, fragment_shader));
-	GLuint second_shader_program = makeProgram(makeShader(GL_VERTEX_SHADER, vertex_shader), makeShader(GL_FRAGMENT_SHADER, second_fragment_shader));
+	Shader myShader("bookcase.vs", "bookcaseDuoTexture.frag");
 
-	//GLuint VAO = makeMesh(vertices);
+	
 
+	GLuint EBO;
 	GLuint VAO;
 	GLuint VBO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO);
-
+	// load vertices
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat), (GLvoid*)0);
-
-	// set indices in case of EBO
-	//glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	//glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices_color_texture), vertices_color_texture, GL_STATIC_DRAW);
+	// position
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)0);
 	glEnableVertexAttribArray(0);
-
+	// set data for color in vertexData
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(3*sizeof(GLfloat)));
+	glEnableVertexAttribArray(1);
+	// set data for texture in vertexData
+	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(GLfloat), (GLvoid*)(6 * sizeof(GLfloat)));
+	glEnableVertexAttribArray(2);
+	// set indices in case of EBO
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+	// stop using VAO
 	glBindVertexArray(0);
+
+
+	//==============================================
+	//	TEXTURES
+	//==============================================
+
+	// texture 1
+	//===========
+	GLuint texture1;
+	glGenTextures(1, &texture1);
+	glBindTexture(GL_TEXTURE_2D, texture1); // bound and settings for texture
+	glUniform1i(glGetUniformLocation(myShader.Program, "ourTexture1"), 0);
+
+	//wrapping parameters & set filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// load image, create texture, and generate mipmap
+	int width, height;
+	unsigned char* image = SOIL_load_image("img\\container.jpg", &width, &height, 0, SOIL_LOAD_RGB);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// texture 2
+	//==========
+
+	GLuint texture2;
+	glGenTextures(1, &texture2);
+	glBindTexture(GL_TEXTURE_2D, texture2);
+	glUniform1i(glGetUniformLocation(myShader.Program, "ourTexture2"), 1);
+
+	//wrapping parameters & set filtering parameters
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+	// load image, create texture, and generate mipmap
+	image = SOIL_load_image("img\\awesomeface.png", &width, &height, 0, SOIL_LOAD_RGB);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, image);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	SOIL_free_image_data(image);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+
+	//==============================================
+	//	Test spot
+	//==============================================
+
+	glm::vec4 vec(1.0f, 0.0f, 0.0f, 1.0f);
+	glm::mat4 trans(1.0f);
+	trans = glm::translate(trans, glm::vec3(1.0f, 1.0f, 0.0f));
+	vec = trans * vec;
+	std::cout << vec.x << vec.y << vec.z << std::endl;
+
+
+	
+	//realTrans = glm::rotate(realTrans, 3.14159265358979323846264338327950288f / 4.0f, glm::vec3(0.0f, 1.0f, 0.0f));
+
+
+
+
+
+
+	//==============================================
+	//	GAME LOOP
+	//==============================================
 
 	// wireframe mode
 	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -204,18 +222,44 @@ int main() {
 
 		glClear(GL_COLOR_BUFFER_BIT);
 
-		// use shaderprogram and bind VAO
-		glUseProgram(shaderProgram);
-		glBindVertexArray(VAO);
-		glDrawArrays(GL_TRIANGLES, 0, 3);
-		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-		glBindVertexArray(0);
+		myShader.Use();
+
+		// set offset uniform
+		GLfloat timeValue = glfwGetTime();
+		GLfloat offsetValue = (sin(timeValue) / 2);
+		GLint vertexMyOffsetLocation = glGetUniformLocation(myShader.Program, "offset");
+		glUniform3f(vertexMyOffsetLocation, offsetValue, 0.0f, 0.0f);
+
+		// set texture uniforms
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, texture1);
+		glUniform1i(glGetUniformLocation(myShader.Program, "ourTexture1"), 0);
+		glActiveTexture(GL_TEXTURE1);
+		glBindTexture(GL_TEXTURE_2D, texture2);
+		glUniform1i(glGetUniformLocation(myShader.Program, "ourTexture2"), 1);
+
+		// mad uniform translations!
+		glm::mat4 realTrans(1.0f);
+		realTrans = glm::scale(realTrans, glm::vec3(0.5f, 0.5f, 0.5f));
+		realTrans = glm::translate(realTrans, glm::vec3(0.8f, 0.8f, 0.0f));
+		realTrans = glm::rotate(realTrans, timeValue, glm::vec3(0.0f, 0.0f, 1.0f));
+		GLuint transformLoc = glGetUniformLocation(myShader.Program, "myMat");
+		glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(realTrans));
+
+
 		
+		//drawing
+		glBindVertexArray(VAO);
+		//glDrawArrays(GL_TRIANGLES, 0, 3);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(0);
 		
 		glfwSwapBuffers(window);
 	}
 
-
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
 	glfwTerminate();
 	return 0;
 

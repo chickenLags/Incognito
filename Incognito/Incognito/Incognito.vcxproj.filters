@@ -13,8 +13,11 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="GLSL">
+    <Filter Include="Resource Files\GLSL">
       <UniqueIdentifier>{acc82e51-00f7-47fd-ad4a-d75e0272fa2b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Images">
+      <UniqueIdentifier>{565cc137-6e5e-4410-8f9a-41e382fc25ba}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -24,5 +27,64 @@
     <ClCompile Include="glContext.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Shader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Incognito.rc">
+      <Filter>Resource Files</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="first_vertex_shader.vs">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="green.frag">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="orange.frag">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="input_color.frag">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="second.vs">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="uniform_tut.frag">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="interpolation.vs">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="interpolation.frag">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="move_interpolate.vs">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="bookcase.vs">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="bookcase.frag">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+    <None Include="bookcaseDuoTexture.frag">
+      <Filter>Resource Files\GLSL</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="img\container.jpg">
+      <Filter>Resource Files\Images</Filter>
+    </Image>
   </ItemGroup>
 </Project>
